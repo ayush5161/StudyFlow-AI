@@ -1,98 +1,165 @@
-const syllabusInput = document.getElementById("syllabusInput");
-const syllabusName = document.getElementById("syllabusName");
+const hoursList = document.getElementById("hoursList")
 
-syllabusInput.addEventListener("change", function(){
+/* --------------------------
+SHOW OTHER TEXTBOX
+---------------------------*/
 
-if(this.files.length > 1){
-syllabusName.textContent = this.files.length + " files uploaded";
-}
-else if(this.files.length === 1){
-syllabusName.textContent = this.files[0].name;
-}
-else{
-syllabusName.textContent = "No file chosen";
-}
+document.querySelectorAll(".status-select").forEach(select=>{
 
-});
+select.addEventListener("change",()=>{
 
+const input = select.parentElement.querySelector(".other-input")
 
-const dateInput = document.getElementById("datesheetInput");
-const dateName = document.getElementById("datesheetName");
-
-dateInput.addEventListener("change", function(){
-
-if(this.files.length > 0){
-dateName.textContent = this.files[0].name;
-}
-else{
-dateName.textContent = "No file chosen";
+if(select.value==="others"){
+input.style.display="block"
+}else{
+input.style.display="none"
 }
 
-});
+})
 
-// Drag and Drop functionality
-const dropAreas = document.querySelectorAll('.drop-area');
+})
 
-dropAreas.forEach(area => {
-    const input = area.querySelector('input[type="file"]');
-    const span = area.querySelector('.file-name');
 
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        area.addEventListener(eventName, preventDefaults, false);
-    });
+/* --------------------------
+GENERATE DATE RANGE
+---------------------------*/
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+function generateDateRows(){
 
-    // Highlight drop area when dragging over
-    ['dragenter', 'dragover'].forEach(eventName => {
-        area.addEventListener(eventName, highlight, false);
-    });
+let lastExam = null
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        area.addEventListener(eventName, unhighlight, false);
-    });
+document.querySelectorAll(".exam-date").forEach(span=>{
 
-    function highlight(e) {
-        area.classList.add('drag-over');
-    }
+const txt = span.innerText
 
-    function unhighlight(e) {
-        area.classList.remove('drag-over');
-    }
+if(txt==="No exam date") return
 
-    // Handle drop
-    area.addEventListener('drop', handleDrop, false);
+const d = new Date(txt)
 
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
+if(!lastExam || d>lastExam){
+lastExam=d
+}
 
-        handleFiles(files);
-    }
+})
 
-    function handleFiles(files) {
-        // Create a DataTransfer object to set files
-        const dt = new DataTransfer();
-        for (let file of files) {
-            dt.items.add(file);
-        }
-        input.files = dt.files;
+if(!lastExam) return
 
-        // Update display
-        updateFileName();
-    }
+const today = new Date()
 
-    function updateFileName() {
-        if (input.files.length > 1) {
-            span.textContent = input.files.length + " files uploaded";
-        } else if (input.files.length === 1) {
-            span.textContent = input.files[0].name;
-        } else {
-            span.textContent = "No file chosen";
-        }
-    }
-});
+let cur = new Date(today)
+
+while(cur<=lastExam){
+
+const row = document.createElement("div")
+row.className="date-row"
+
+const dateSpan=document.createElement("span")
+
+const formatted=
+cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,'0')+"-"+String(cur.getDate()).padStart(2,'0')
+
+dateSpan.innerText=formatted
+
+const input=document.createElement("input")
+
+input.type="number"
+input.placeholder="hours"
+
+row.appendChild(dateSpan)
+row.appendChild(input)
+
+hoursList.appendChild(row)
+
+cur.setDate(cur.getDate()+1)
+
+}
+
+}
+
+generateDateRows()
+
+
+
+/* --------------------------
+GENERATE SCHEDULE
+---------------------------*/
+
+document.getElementById("generateBtn").addEventListener("click",async()=>{
+
+const subjects=[]
+
+document.querySelectorAll(".subject-block").forEach(block=>{
+
+const name=block.querySelector("h2").innerText
+const exam=block.querySelector(".exam-date").innerText
+
+const topics=[]
+
+block.querySelectorAll(".topic-row").forEach(row=>{
+
+const topic=row.querySelector(".topic-name").innerText
+const status=row.querySelector(".status-select").value
+const other=row.querySelector(".other-input").value
+
+topics.push({
+
+topic:topic,
+status:status==="others"?other:status
+
+})
+
+})
+
+subjects.push({
+
+subject:name,
+exam_date:exam,
+topics:topics
+
+})
+
+})
+
+
+const daily_hours={}
+
+document.querySelectorAll(".date-row").forEach(row=>{
+
+const date=row.children[0].innerText
+const hours=row.children[1].value
+
+if(hours){
+daily_hours[date]=parseInt(hours)
+}
+
+})
+
+
+const payload={
+
+subjects:subjects,
+daily_hours:daily_hours
+
+}
+
+
+await fetch("/submit_status/1",{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(payload)
+
+})
+
+
+await fetch("/generate_schedule/1",{
+method:"POST"
+})
+
+
+window.location="/schedule_page"
+
+})

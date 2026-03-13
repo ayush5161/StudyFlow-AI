@@ -141,3 +141,35 @@ padding:8px;
 color:black;
 text-align:center;
 }
+
+.generate-btn{
+
+display:block;
+
+margin:40px auto;
+
+padding:14px 40px;
+
+background:linear-gradient(135deg,#7b2ff7,#9f55ff);
+
+border:none;
+
+border-radius:25px;
+
+color:white;
+
+font-size:18px;
+
+cursor:pointer;
+
+transition:0.3s;
+
+}
+
+.generate-btn:hover{
+
+box-shadow:0 0 20px #7b2ff7;
+
+transform:translateY(-2px);
+
+}

@@ -1,18 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <title>Topics Status</title>
+
 <link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
+
 </head>
 
 <body>
 
-<h1 class="page-title">Topics Status</h1>
+<h1 class="title">Topics Status</h1>
 
-<div class="dashboard">
+<div class="container">
 
 <!-- LEFT PANEL -->
+
 <div class="card topics-card">
 
 {% for subject in data.subjects %}
@@ -20,8 +24,13 @@
 <div class="subject-block">
 
 <div class="subject-header">
-<h2>{{subject.name}}</h2>
-<span>{{subject.exam_date}}</span>
+
+<h2>{{subject.subject}}</h2>
+
+<span class="exam-date">
+{{subject.exam_date if subject.exam_date else "No exam date"}}
+</span>
+
 </div>
 
 <div class="topics">
@@ -32,15 +41,17 @@
 
 <span class="topic-name">{{topic}}</span>
 
-<select class="status-select" onchange="showOther(this)">
+<select class="status-select">
+
 <option value="">Select</option>
 <option value="completed">Completed</option>
-<option value="partially_completed">Partially Completed</option>
+<option value="partial">Partially Completed</option>
 <option value="not_started">Not Started</option>
 <option value="others">Others</option>
+
 </select>
 
-<input type="text" class="other-input" placeholder="Enter status">
+<input class="other-input" placeholder="Enter custom status">
 
 </div>
 
@@ -60,32 +71,27 @@
 <div class="card hours-card">
 
 <div class="hours-header">
+
 <span>Date</span>
-<span>Enter hours you can study</span>
-</div>
-
-<div class="hours-list">
-
-{% for d in dates %}
-
-<div class="date-row">
-
-<span>{{d}}</span>
-
-<input type="number" min="0" placeholder="Enter">
+<span>Study Hours</span>
 
 </div>
 
-{% endfor %}
-
-</div>
+<div id="hoursList"></div>
 
 </div>
 
 </div>
 
 
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<button id="generateBtn" class="generate-btn">
+
+Generate Schedule
+
+</button>
+
+
+<script src="{{ url_for('static', filename='Status.js') }}"></script>
 
 </body>
 </html>

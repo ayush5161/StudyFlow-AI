@@ -1,216 +1,161 @@
 import os
-import json
 import base64
-from openai import OpenAI
+import json
 from pypdf import PdfReader
 from docx import Document
+from openai import OpenAI
 import apikey
-
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=apikey.key
 )
 
-TEXT_MODEL = "qwen/qwen2.5-vl-72b-instruct"
-VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct"
+MODEL = "qwen/qwen2.5-72b-instruct"
 
 
-# -------------------------
-# PDF TEXT EXTRACTION
-# -------------------------
+# -----------------------
+# TEXT EXTRACTION
+# -----------------------
 
-def read_pdf(path):
+def extract_pdf(path):
 
     reader = PdfReader(path)
 
     text = ""
 
     for page in reader.pages:
-        t = page.extract_text()
-
-        if t:
-            text += t + "\n"
+        text += page.extract_text() + "\n"
 
     return text
 
 
-# -------------------------
-# DOCX TEXT EXTRACTION
-# -------------------------
-
-def read_docx(path):
+def extract_docx(path):
 
     doc = Document(path)
 
-    text = []
+    text = ""
 
     for p in doc.paragraphs:
-        text.append(p.text)
+        text += p.text + "\n"
 
-    return "\n".join(text)
+    return text
 
 
-# -------------------------
-# IMAGE TO BASE64
-# -------------------------
-
-def image_to_base64(path):
+def extract_image(path):
 
     with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-
-# -------------------------
-# LLM PROCESSOR (TEXT)
-# -------------------------
-
-def process_text(text):
-
-    text = text[:8000]  # prevent huge token usage
+        img = base64.b64encode(f.read()).decode()
 
     response = client.chat.completions.create(
 
-        model=TEXT_MODEL,
-
-        temperature=0,
-
-        max_tokens=1200,
+        model=MODEL,
 
         messages=[
             {
-                "role": "system",
-                "content": """
-You extract structured academic information from documents.
-
-Return JSON ONLY.
-
-Format:
-
-{
- "subjects":[
-   {
-     "subject":"subject name",
-     "exam_date":"YYYY-MM-DD or null",
-     "topics":[
-       "topic1",
-       "topic2"
-     ]
-   }
- ]
-}
-
-Rules:
-- Combine syllabus topics under the correct subject
-- Extract exam dates from datesheet documents
-- If no exam date exists set null
-- Remove duplicates"""
-            },
-
-            {
-                "role": "user",
-                "content": text
-            }
-        ],
-
-        
-    )
-
-    content = response.choices[0].message.content
-
-    start = content.find("{")
-    end = content.rfind("}") + 1
-
-    return json.loads(content[start:end])
-
-
-# -------------------------
-# LLM PROCESSOR (IMAGE)
-# -------------------------
-
-def process_image(path):
-
-    img_b64 = image_to_base64(path)
-
-    response = client.chat.completions.create(
-
-        model=VISION_MODEL,
-
-        temperature=0,
-
-        max_tokens=800,
-
-        messages=[
-            {
-                "role": "system",
-                "content": """
-Extract the exam timetable.
-
-Return JSON only.
-
-Format:
-
-{
- "datesheet":{
-   "01-01-2026":"maths",
-   "02-01-2026":"physics"
- }
-}
-"""
-            },
-
-            {
-                "role": "user",
+                "role":"user",
                 "content":[
                     {
                         "type":"text",
-                        "text":"Extract exam timetable"
+                        "text":"Extract all readable text from this document."
                     },
                     {
                         "type":"image_url",
                         "image_url":{
-                            "url":f"data:image/jpeg;base64,{img_b64}"
+                            "url":f"data:image/png;base64,{img}"
                         }
                     }
                 ]
             }
-        ],
-
-        
+        ]
     )
 
-    content = response.choices[0].message.content
-
-    start = content.find("{")
-    end = content.rfind("}") + 1
-
-    return json.loads(content[start:end])
+    return response.choices[0].message.content
 
 
-# -------------------------
+# -----------------------
+# ORGANIZE WITH LLM
+# -----------------------
+
+def organize_with_llm(all_text):
+
+    combined = "\n\n".join(all_text)
+
+    prompt = f"""
+You are organizing exam data for a study planner.
+
+You will receive:
+• syllabus text
+• exam datesheet text
+
+Your job:
+
+1. Detect subjects.
+2. Extract syllabus topics.
+3. Match exam dates to subjects.
+4. Ignore exams whose syllabus was not uploaded.
+
+Topics must be grouped (4-8 topics per subject).
+
+Return JSON only:
+
+{{
+ "subjects":[
+   {{
+     "subject":"subject name",
+     "exam_date":"YYYY-MM-DD",
+     "topics":[
+       "topic1",
+       "topic2",
+       "topic3"
+     ]
+   }}
+ ]
+}}
+
+TEXT:
+
+{combined}
+"""
+
+    response = client.chat.completions.create(
+
+        model=MODEL,
+
+        temperature=0,
+
+        messages=[
+            {"role":"user","content":prompt}
+        ]
+
+    )
+
+    result = response.choices[0].message.content
+
+    try:
+        return json.loads(result)
+    except:
+        print("LLM OUTPUT:")
+        print(result)
+        raise Exception("LLM JSON parsing failed")
+
+
+# -----------------------
 # MAIN EXTRACT FUNCTION
-# -------------------------
+# -----------------------
 
-def extract(file_path):
+def extract(path):
 
-    ext = os.path.splitext(file_path)[1].lower()
+    ext = os.path.splitext(path)[1].lower()
 
     if ext == ".pdf":
-
-        text = read_pdf(file_path)
-
-        return process_text(text)
+        return extract_pdf(path)
 
     elif ext == ".docx":
+        return extract_docx(path)
 
-        text = read_docx(file_path)
-
-        return process_text(text)
-
-    elif ext in [".jpg", ".jpeg", ".png"]:
-
-        return process_image(file_path)
+    elif ext in [".png",".jpg",".jpeg"]:
+        return extract_image(path)
 
     else:
-
-        raise ValueError("Unsupported file type")
+        raise Exception("Unsupported file type")
