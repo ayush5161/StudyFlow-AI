@@ -79,42 +79,64 @@ def schedule_page():
 @app.route("/upload", methods=["POST"])
 def upload_files():
 
-    userid = request.form.get("userid")
+    try:
 
-    files = request.files.getlist("files")
+        userid = request.form.get("userid")
 
-    all_text = []
+        if not userid:
+            userid = 1
 
-    for file in files:
+        userid = int(userid)
 
-        path = "uploads/" + file.filename
+        files = request.files.getlist("files")
 
-        file.save(path)
+        if not files:
+            return {"error":"No files uploaded"},400
 
-        text = extract(path)
+        all_text = []
 
-        all_text.append(text)
+        for file in files:
 
-    final_json = organize_with_llm(all_text)
+            if file.filename == "":
+                continue
 
-    existing = StudyData.query.filter_by(userid=userid).first()
+            path = os.path.join(UPLOAD_FOLDER, file.filename)
 
-    if existing:
+            file.save(path)
 
-        existing.extracted_json = json.dumps(final_json)
+            text = extract(path)
 
-    else:
+            all_text.append(text)
 
-        new = StudyData(
-            userid=userid,
-            extracted_json=json.dumps(final_json)
-        )
+        if not all_text:
+            return {"error":"Text extraction failed"},400
 
-        db.session.add(new)
+        final_json = organize_with_llm(all_text)
 
-    db.session.commit()
+        existing = StudyData.query.filter_by(userid=userid).first()
 
-    return jsonify(final_json)
+        if existing:
+
+            existing.extracted_json = json.dumps(final_json)
+
+        else:
+
+            new = StudyData(
+                userid=userid,
+                extracted_json=json.dumps(final_json)
+            )
+
+            db.session.add(new)
+
+        db.session.commit()
+
+        return jsonify(final_json)
+
+    except Exception as e:
+
+        print("UPLOAD ERROR:", e)
+
+        return {"error":str(e)},500
 
 # -----------------------
 # SAVE STATUS

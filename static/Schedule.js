@@ -1,80 +1,119 @@
-async function loadSchedule(){
+const syllabusInput = document.getElementById("syllabusInput");
+const datesheetInput = document.getElementById("datesheetInput");
 
-    const container = document.getElementById("scheduleContainer");
+const syllabusName = document.getElementById("syllabusName");
+const datesheetName = document.getElementById("datesheetName");
 
-    const res = await fetch("http://127.0.0.1:5000/schedule/1");
+const uploadBtn = document.querySelector(".upload-btn");
 
-    const data = await res.json();
+const dropAreas = document.querySelectorAll(".drop-area");
 
-    const schedule = data.schedule;
 
-    Object.keys(schedule).forEach(date => {
+/* -------------------------
+DRAG & DROP
+--------------------------*/
 
-        const dateBlock = document.createElement("div");
-        dateBlock.className = "date-block";
+dropAreas.forEach(area => {
 
-        const dateTitle = document.createElement("div");
-        dateTitle.className = "date-title";
-        dateTitle.innerText = date;
+    area.addEventListener("dragover", e => {
+        e.preventDefault();
+        area.classList.add("drag-over");
+    });
 
-        dateBlock.appendChild(dateTitle);
+    area.addEventListener("dragleave", () => {
+        area.classList.remove("drag-over");
+    });
 
-        const subjects = {};
+    area.addEventListener("drop", e => {
 
-        schedule[date].forEach(item => {
+        e.preventDefault();
 
-            const parts = item.topic.split(" - ");
-            const subject = parts[0];
-            const topic = parts[1];
+        area.classList.remove("drag-over");
 
-            if(!subjects[subject]) subjects[subject] = [];
+        const files = e.dataTransfer.files;
 
-            subjects[subject].push({
-                topic:topic,
-                duration:item.duration
-            });
+        if(area.contains(syllabusInput)){
 
-        });
+            syllabusInput.files = files;
 
-        Object.keys(subjects).forEach(subject => {
+            syllabusName.textContent = files.length + " file(s) selected";
 
-            const subjectBlock = document.createElement("div");
-            subjectBlock.className = "subject-block";
+        }else{
 
-            const subjectName = document.createElement("div");
-            subjectName.className = "subject-name";
-            subjectName.innerText = subject;
+            datesheetInput.files = files;
 
-            subjectBlock.appendChild(subjectName);
+            datesheetName.textContent = files[0].name;
 
-            subjects[subject].forEach(t => {
-
-                const row = document.createElement("div");
-                row.className = "topic-row";
-
-                const topicName = document.createElement("div");
-                topicName.className = "topic-name";
-                topicName.innerText = t.topic;
-
-                const duration = document.createElement("div");
-                duration.className = "duration";
-                duration.innerText = t.duration;
-
-                row.appendChild(topicName);
-                row.appendChild(duration);
-
-                subjectBlock.appendChild(row);
-
-            });
-
-            dateBlock.appendChild(subjectBlock);
-
-        });
-
-        container.appendChild(dateBlock);
+        }
 
     });
 
-}
+});
 
-loadSchedule();
+
+/* -------------------------
+FILE SELECT
+--------------------------*/
+
+syllabusInput.addEventListener("change", () => {
+
+    if(syllabusInput.files.length > 0){
+        syllabusName.textContent = syllabusInput.files.length + " file(s) selected";
+    }
+
+});
+
+
+datesheetInput.addEventListener("change", () => {
+
+    if(datesheetInput.files.length > 0){
+        datesheetName.textContent = datesheetInput.files[0].name;
+    }
+
+});
+
+
+/* -------------------------
+UPLOAD FILES TO FLASK
+--------------------------*/
+
+uploadBtn.addEventListener("click", async () => {
+
+    if(!syllabusInput.files.length || !datesheetInput.files.length){
+
+        alert("Please upload syllabus and datesheet");
+
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("userid",1);
+
+    for(let file of syllabusInput.files){
+        formData.append("files",file);
+    }
+
+    formData.append("files",datesheetInput.files[0]);
+
+    try{
+
+        const res = await fetch("/upload",{
+            method:"POST",
+            body:formData
+        });
+
+        const data = await res.json();
+
+        console.log(data);
+
+        window.location.href = "/status";
+
+    }catch(err){
+
+        console.error(err);
+        alert("Upload failed");
+
+    }
+
+});

@@ -1,165 +1,117 @@
-const hoursList = document.getElementById("hoursList")
+const syllabusInput = document.getElementById("syllabusInput");
+const datesheetInput = document.getElementById("datesheetInput");
 
-/* --------------------------
-SHOW OTHER TEXTBOX
----------------------------*/
+const syllabusName = document.getElementById("syllabusName");
+const datesheetName = document.getElementById("datesheetName");
 
-document.querySelectorAll(".status-select").forEach(select=>{
+const uploadBtn = document.querySelector(".upload-btn");
 
-select.addEventListener("change",()=>{
+const dropAreas = document.querySelectorAll(".drop-area");
 
-const input = select.parentElement.querySelector(".other-input")
 
-if(select.value==="others"){
-input.style.display="block"
-}else{
-input.style.display="none"
-}
+/* -----------------------
+FILE SELECT
+-----------------------*/
 
-})
+syllabusInput.addEventListener("change", () => {
 
-})
+    if (syllabusInput.files.length > 0) {
+        syllabusName.textContent = syllabusInput.files.length + " file(s) selected";
+    }
 
+});
 
-/* --------------------------
-GENERATE DATE RANGE
----------------------------*/
+datesheetInput.addEventListener("change", () => {
 
-function generateDateRows(){
+    if (datesheetInput.files.length > 0) {
+        datesheetName.textContent = datesheetInput.files[0].name;
+    }
 
-let lastExam = null
+});
 
-document.querySelectorAll(".exam-date").forEach(span=>{
 
-const txt = span.innerText
+/* -----------------------
+DRAG & DROP
+-----------------------*/
 
-if(txt==="No exam date") return
+dropAreas[0].addEventListener("dragover", e => {
+    e.preventDefault();
+});
 
-const d = new Date(txt)
+dropAreas[0].addEventListener("drop", e => {
 
-if(!lastExam || d>lastExam){
-lastExam=d
-}
+    e.preventDefault();
 
-})
+    const files = e.dataTransfer.files;
 
-if(!lastExam) return
+    syllabusInput.files = files;
 
-const today = new Date()
+    syllabusName.textContent = files.length + " file(s) selected";
 
-let cur = new Date(today)
+});
 
-while(cur<=lastExam){
 
-const row = document.createElement("div")
-row.className="date-row"
+dropAreas[1].addEventListener("dragover", e => {
+    e.preventDefault();
+});
 
-const dateSpan=document.createElement("span")
+dropAreas[1].addEventListener("drop", e => {
 
-const formatted=
-cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,'0')+"-"+String(cur.getDate()).padStart(2,'0')
+    e.preventDefault();
 
-dateSpan.innerText=formatted
+    const files = e.dataTransfer.files;
 
-const input=document.createElement("input")
+    datesheetInput.files = files;
 
-input.type="number"
-input.placeholder="hours"
+    datesheetName.textContent = files[0].name;
 
-row.appendChild(dateSpan)
-row.appendChild(input)
+});
 
-hoursList.appendChild(row)
 
-cur.setDate(cur.getDate()+1)
+/* -----------------------
+UPLOAD TO FLASK
+-----------------------*/
 
-}
+uploadBtn.addEventListener("click", async () => {
 
-}
+    if (!syllabusInput.files.length || !datesheetInput.files.length) {
 
-generateDateRows()
+        alert("Please upload both syllabus and datesheet");
 
+        return;
 
+    }
 
-/* --------------------------
-GENERATE SCHEDULE
----------------------------*/
+    const formData = new FormData();
 
-document.getElementById("generateBtn").addEventListener("click",async()=>{
+    formData.append("userid", 1);
 
-const subjects=[]
+    for (let file of syllabusInput.files) {
+        formData.append("files", file);
+    }
 
-document.querySelectorAll(".subject-block").forEach(block=>{
+    formData.append("files", datesheetInput.files[0]);
 
-const name=block.querySelector("h2").innerText
-const exam=block.querySelector(".exam-date").innerText
 
-const topics=[]
+    try {
 
-block.querySelectorAll(".topic-row").forEach(row=>{
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
 
-const topic=row.querySelector(".topic-name").innerText
-const status=row.querySelector(".status-select").value
-const other=row.querySelector(".other-input").value
+        const data = await res.json();
 
-topics.push({
+        console.log("UPLOAD RESPONSE:", data);
 
-topic:topic,
-status:status==="others"?other:status
+        window.location.href = "/status";
 
-})
+    } catch (err) {
 
-})
+        console.error(err);
 
-subjects.push({
+        alert("Upload failed");
 
-subject:name,
-exam_date:exam,
-topics:topics
+    }
 
-})
-
-})
-
-
-const daily_hours={}
-
-document.querySelectorAll(".date-row").forEach(row=>{
-
-const date=row.children[0].innerText
-const hours=row.children[1].value
-
-if(hours){
-daily_hours[date]=parseInt(hours)
-}
-
-})
-
-
-const payload={
-
-subjects:subjects,
-daily_hours:daily_hours
-
-}
-
-
-await fetch("/submit_status/1",{
-
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify(payload)
-
-})
-
-
-await fetch("/generate_schedule/1",{
-method:"POST"
-})
-
-
-window.location="/schedule_page"
-
-})
+});

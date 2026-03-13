@@ -5,6 +5,10 @@ from pypdf import PdfReader
 from docx import Document
 from openai import OpenAI
 import apikey
+import datetime
+
+
+today_date = datetime.date.today().isoformat()
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -82,41 +86,60 @@ def organize_with_llm(all_text):
     combined = "\n\n".join(all_text)
 
     prompt = f"""
-You are organizing exam data for a study planner.
+    You are preparing structured data for a study planner.
 
-You will receive:
-• syllabus text
-• exam datesheet text
+    INPUT:
+    You receive:
+    1) syllabus text
+    2) exam datesheet text
 
-Your job:
+    TASKS:
 
-1. Detect subjects.
-2. Extract syllabus topics.
-3. Match exam dates to subjects.
-4. Ignore exams whose syllabus was not uploaded.
+    1. Extract subjects and their syllabus topics.
+    2. Extract exam dates for subjects.
+    3. Match subjects even if names differ slightly.
+    4. Ignore exams whose syllabus was not uploaded.
 
-Topics must be grouped (4-8 topics per subject).
+    Rules for topic extraction:
+    • Group topics (4-8 per subject)
+    • Use unit titles if possible
 
-Return JSON only:
+    Rules for dates:
+    • Convert to YYYY-MM-DD format.
 
-{{
- "subjects":[
-   {{
-     "subject":"subject name",
-     "exam_date":"YYYY-MM-DD",
-     "topics":[
-       "topic1",
-       "topic2",
-       "topic3"
-     ]
-   }}
- ]
-}}
+    Then create a list of study days:
 
-TEXT:
+    Today is {today_date}
 
-{combined}
-"""
+    The last exam date is the latest exam date you found.
+
+    Generate every date from today until the last exam.
+
+    Return JSON ONLY in this format:
+
+    {{
+    "subjects":[
+    {{
+        "subject":"name",
+        "exam_date":"YYYY-MM-DD",
+        "topics":[
+        "topic1",
+        "topic2",
+        "topic3"
+        ]
+    }}
+    ],
+    "study_days":[
+    {{
+        "date":"YYYY-MM-DD",
+        "hours":null
+    }}
+    ]
+    }}
+
+    TEXT:
+    {combined}
+    """
 
     response = client.chat.completions.create(
 
