@@ -1,86 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow AI</title>
-
-
+<meta charset="utf-8" />
+<title>StudyFlow — Upload</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='Upload-page.css') }}">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
 </head>
-
 <body>
 
 <header class="navbar">
-
-<div class="logo">StudyFlow</div>
-
-<nav>
-<a href="#">Home</a>
-<a href="#">Features</a>
-<a href="#">Docs</a>
-<a href="#">About</a>
-</nav>
-
-<button class="btn-primary">Login</button>
-
+  <div class="logo">StudyFlow</div>
+  <nav>
+    <a href="/upload_page">Upload</a>
+    <a href="/status">Status</a>
+    <a href="/schedule_page">Schedule</a>
+    <a href="/logout">Logout</a>
+  </nav>
 </header>
 
-
 <section class="hero">
+  <div class="upload-box">
+    <h3>Upload Files (syllabus documents and datesheet images/pdf)</h3>
 
-<span class="badge">Introducing AI</span>
+    <div class="drop-area" id="syllabusDrop">
+      <p>Drag & Drop Syllabus (docx/pdf)</p>
+      <label class="file-btn">Choose File
+        <input id="syllabusInput" type="file" multiple>
+      </label>
+      <div class="file-name" id="syllabusName">No file chosen</div>
+    </div>
 
-<h1>Upload Your Syllabus & Datesheet</h1>
+    <div class="drop-area" id="datesheetDrop">
+      <p>Drag & Drop Datesheet (image/pdf)</p>
+      <label class="file-btn">Choose File
+        <input id="datesheetInput" type="file">
+      </label>
+      <div class="file-name" id="datesheetName">No file chosen</div>
+    </div>
 
-<p>
-StudyFlow AI will analyze your syllabus and exam schedule to generate
-a smart day-by-day study plan automatically.
-</p>
-
-
-<div class="upload-box">
-
-<h3>Upload Files</h3>
-
-<div class="drop-area">
-<p>Drag & Drop Syllabus</p>
-
-<label class="file-btn">
-Choose File
-<input type="file" multiple id="syllabusInput">
-</label>
-
-<span class="file-name" id="syllabusName">No file chosen</span>
-
-</div>
-
-
-<div class="drop-area">
-<p>Drag & Drop Datesheet</p>
-
-<label class="file-btn">
-Choose File
-<input type="file" id="datesheetInput">
-</label>
-
-<span class="file-name" id="datesheetName">No file chosen</span>
-
-</div>
-
-<button class="btn-primary upload-btn">
-Generate Study Plan
-</button>
-
-</div>
-
+    <button class="btn-primary upload-btn" id="uploadBtn">Generate Study Plan</button>
+  </div>
 </section>
-<script src="{{ url_for('static', filename='Upload-page.js') }}"></script>
 
+<script src="{{ url_for('static', filename='upload.js') }}"></script>
 </body>
-
 </html>

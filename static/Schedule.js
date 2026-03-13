@@ -1,119 +1,40 @@
-const syllabusInput = document.getElementById("syllabusInput");
-const datesheetInput = document.getElementById("datesheetInput");
-
-const syllabusName = document.getElementById("syllabusName");
-const datesheetName = document.getElementById("datesheetName");
-
-const uploadBtn = document.querySelector(".upload-btn");
-
-const dropAreas = document.querySelectorAll(".drop-area");
-
-
-/* -------------------------
-DRAG & DROP
---------------------------*/
-
-dropAreas.forEach(area => {
-
-    area.addEventListener("dragover", e => {
-        e.preventDefault();
-        area.classList.add("drag-over");
+// static/schedule.js
+async function loadSchedule(){
+  const res = await fetch("/schedule");
+  if(!res.ok){
+    document.getElementById("scheduleContainer").innerText = "No schedule yet";
+    return;
+  }
+  const data = await res.json();
+  const container = document.getElementById("scheduleContainer");
+  container.innerHTML = "";
+  const schedule = data.schedule || data; // flexible
+  Object.keys(schedule).sort().forEach(date => {
+    const dateBlock = document.createElement("div");
+    dateBlock.className = "date-block";
+    const dateTitle = document.createElement("div"); dateTitle.className = "date-title"; dateTitle.innerText = date;
+    dateBlock.appendChild(dateTitle);
+    const subjects = {};
+    schedule[date].forEach(item=>{
+      const parts = (item.topic || "").split(" - ");
+      const subject = parts[0] || "Misc";
+      const topic = parts.slice(1).join(" - ") || parts[0];
+      if(!subjects[subject]) subjects[subject] = [];
+      subjects[subject].push({ topic: topic, duration: item.duration || "" });
     });
-
-    area.addEventListener("dragleave", () => {
-        area.classList.remove("drag-over");
+    Object.keys(subjects).forEach(s=>{
+      const sb = document.createElement("div"); sb.className = "subject-block";
+      const sn = document.createElement("div"); sn.className = "subject-name"; sn.innerText = s;
+      sb.appendChild(sn);
+      subjects[s].forEach(t=>{
+        const row = document.createElement("div"); row.className = "topic-row";
+        const tn = document.createElement("div"); tn.className = "topic-name"; tn.innerText = t.topic;
+        const du = document.createElement("div"); du.className = "duration"; du.innerText = t.duration;
+        row.appendChild(tn); row.appendChild(du); sb.appendChild(row);
+      });
+      dateBlock.appendChild(sb);
     });
-
-    area.addEventListener("drop", e => {
-
-        e.preventDefault();
-
-        area.classList.remove("drag-over");
-
-        const files = e.dataTransfer.files;
-
-        if(area.contains(syllabusInput)){
-
-            syllabusInput.files = files;
-
-            syllabusName.textContent = files.length + " file(s) selected";
-
-        }else{
-
-            datesheetInput.files = files;
-
-            datesheetName.textContent = files[0].name;
-
-        }
-
-    });
-
-});
-
-
-/* -------------------------
-FILE SELECT
---------------------------*/
-
-syllabusInput.addEventListener("change", () => {
-
-    if(syllabusInput.files.length > 0){
-        syllabusName.textContent = syllabusInput.files.length + " file(s) selected";
-    }
-
-});
-
-
-datesheetInput.addEventListener("change", () => {
-
-    if(datesheetInput.files.length > 0){
-        datesheetName.textContent = datesheetInput.files[0].name;
-    }
-
-});
-
-
-/* -------------------------
-UPLOAD FILES TO FLASK
---------------------------*/
-
-uploadBtn.addEventListener("click", async () => {
-
-    if(!syllabusInput.files.length || !datesheetInput.files.length){
-
-        alert("Please upload syllabus and datesheet");
-
-        return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("userid",1);
-
-    for(let file of syllabusInput.files){
-        formData.append("files",file);
-    }
-
-    formData.append("files",datesheetInput.files[0]);
-
-    try{
-
-        const res = await fetch("/upload",{
-            method:"POST",
-            body:formData
-        });
-
-        const data = await res.json();
-
-        console.log(data);
-
-        window.location.href = "/status";
-
-    }catch(err){
-
-        console.error(err);
-        alert("Upload failed");
-
-    }
-
-});
+    container.appendChild(dateBlock);
+  });
+}
+loadSchedule();

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>StudyFlow — Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='Upload-page.css') }}">
+</head>
+<body>
+  <div class="upload-box" style="width:420px; margin:80px auto;">
+    <h3>Login</h3>
+    <input id="username" placeholder="username" style="padding:10px;width:100%;margin:8px 0;">
+    <input id="password" type="password" placeholder="password" style="padding:10px;width:100%;margin:8px 0;">
+    <button id="loginBtn" class="btn-primary" style="width:100%;">Login</button>
+    <p style="margin-top:12px;color:#bbb">No account? <a href="#" id="create">Create one</a></p>
+  </div>
+
+<script>
+document.getElementById("loginBtn").addEventListener("click", async ()=>{
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const res = await fetch("/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({username,password})
+  });
+  if(res.ok) window.location = "/upload_page";
+  else {
+    const j = await res.json();
+    alert(j.error || "Login failed");
+  }
+});
+document.getElementById("create").addEventListener("click", async (e)=>{
+  e.preventDefault();
+  const username = prompt("username?");
+  const password = prompt("password?");
+  if(!username || !password) return alert("cancelled")
+  const res = await fetch("/register",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({username,password})
+  });
+  if(res.ok) alert("Created - now login");
+  else {
+    const j = await res.json();
+    alert(j.error || "err");
+  }
+});
+</script>
+</body>
+</html>

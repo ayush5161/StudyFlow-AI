@@ -1,73 +1,89 @@
+# schedule_planner.py
 import json
 from openai import OpenAI
 import apikey
 
+client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=apikey.key)
+MODEL = "qwen/qwen2.5-72b-instruct"
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=apikey.key
-)
+def generate_schedule(topic_status_json):
+    """
+    Accepts the payload saved from the status page:
+    {
+      "subjects":[ {subject, exam_date, topics:[{topic, status}, ...]} ],
+      "daily_hours": { "YYYY-MM-DD": number_of_hours, ...}
+    }
 
-MODEL = "qwen/qwen3-vl-235b-a22b-thinking"
+    Returns schedule JSON:
+    {
+      "schedule": {
+         "YYYY-MM-DD": [
+            {"topic":"Subject - Topic","duration":"2hr"}
+         ],
+         ...
+      }
+    }
+    """
+    # If an LLM failure occurs, fallback to naive scheduling.
+    prompt = f"""
+You're a schedule generator. Input is a JSON with subjects (each with topics and statuses) and available hours per day.
+Task: allocate topics into days between today and exam dates, respecting daily hours, prioritizing "not started" topics earlier.
+Input JSON:
+{json.dumps(topic_status_json, indent=2)}
 
+Output JSON structure:
 
-def generate_schedule(extracted_data, study_hours):
-
-    prompt = f"""You are an intelligent exam preparation planner.
-
-Input contains:
-1. Subjects
-2. Exam dates
-3. Topics with preparation status
-4. Hours available per day
-
-Your task is to generate a realistic day-by-day study schedule.
-
-Rules:
-
-1. Prioritize subjects with the nearest exam date.
-2. Topics marked "not started" should receive the most study time.
-3. Topics marked "partially completed" should receive moderate time.
-4. Topics marked "completed" should only receive revision if extra time exists.
-5. Never schedule a topic after its exam date.
-6. Do not exceed the available hours for that day.
-7. Prefer study blocks of 1 or 2 hours.
-8. Spread topics across multiple days if needed.
-
-Return JSON only in this format:
-
-{
- "schedule":{
-   "YYYY-MM-DD":[
-      {"duration":"2h","topic":"Subject - Topic"},
-      {"duration":"1h","topic":"Subject - Topic"}
+{{
+ "schedule": {{
+   "YYYY-MM-DD": [
+      {{"topic":"Subject - Topic", "duration":"Xhr"}}
    ]
- }
-}"""
+ }}
+}}
 
-    response = client.chat.completions.create(
+Return JSON only.
+"""
+    try:
+        resp = client.chat.completions.create(
+            model=MODEL,
+            temperature=0.0,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=16000
+        )
+        out = resp.choices[0].message.content
+        # try to parse
+        first = out.find("{")
+        if first > 0:
+            out = out[first:]
+        return json.loads(out)
+    except Exception as e:
+        print("LLM schedule error:", e)
+        # fallback: simple even distribution
+        return simple_schedule(topic_status_json)
 
-        model=MODEL,
-
-        temperature=0.3,
-
-        max_tokens=2000,
-
-        messages=[
-            {
-                "role":"system",
-                "content":"You generate optimized study schedules."
-            },
-            {
-                "role":"user",
-                "content":prompt
-            }
-        ]
-    )
-
-    content = response.choices[0].message.content
-
-    start = content.find("{")
-    end = content.rfind("}") + 1
-
-    return json.loads(content[start:end])
+def simple_schedule(topic_status_json):
+    import math, datetime
+    subjects = topic_status_json.get("subjects", [])
+    daily = topic_status_json.get("daily_hours", {})
+    # collect days sorted
+    days = sorted(daily.keys())
+    schedule = {}
+    topics_flat = []
+    for s in subjects:
+        for t in s.get("topics", []):
+            # if topics stored as {"topic":..., "status":...}
+            if isinstance(t, dict):
+                name = t.get("topic")
+            else:
+                name = t
+            topics_flat.append(f"{s.get('subject')} - {name}")
+    if not days:
+        return {"schedule": {}}
+    idx = 0
+    for d in days:
+        schedule[d] = []
+        # allocate 1 topic per day (naive)
+        if idx < len(topics_flat):
+            schedule[d].append({"topic": topics_flat[idx], "duration": "2hr"})
+            idx += 1
+    return {"schedule": schedule}

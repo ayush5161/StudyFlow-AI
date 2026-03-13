@@ -1,25 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-<meta charset="UTF-8">
-<title>StudyFlow Schedule</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
+  <meta charset="utf-8" />
+  <title>Schedule</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
 </head>
-
 <body>
+<header class="navbar">
+  <div class="logo">StudyFlow</div>
+  <nav>
+    <a href="/upload_page">Upload</a>
+    <a href="/status">Status</a>
+    <a href="/schedule_page">Schedule</a>
+    <a href="/logout">Logout</a>
+  </nav>
+</header>
 
-<nav class="navbar">
-    <div class="logo">StudyFlow</div>
-</nav>
-
-<h1 class="title">Your Study Plan</h1>
-
-<div id="scheduleContainer" class="schedule-container">
-
+<div class="upload-box" style="margin:40px auto; width:900px;">
+  <h3>Your Study Plan</h3>
+  <div id="scheduleContainer"></div>
 </div>
 
-<script src="{{ url_for('static', filename='Status.js') }}"></script>
-
+<script src="{{ url_for('static', filename='schedule.js') }}"></script>
 </body>
 </html>

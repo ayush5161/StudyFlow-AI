@@ -1,97 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-
-<meta charset="UTF-8">
-<title>Topics Status</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
-
+  <meta charset="utf-8" />
+  <title>Status</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
 </head>
-
 <body>
+<header class="navbar">
+  <div class="logo">StudyFlow</div>
+  <nav>
+    <a href="/upload_page">Upload</a>
+    <a href="/status">Status</a>
+    <a href="/schedule_page">Schedule</a>
+    <a href="/logout">Logout</a>
+  </nav>
+</header>
 
-<h1 class="title">Topics Status</h1>
+<div class="container" style="padding:30px;">
+  <div class="card topics-card">
+    {% for subject in data.subjects %}
+      <div class="subject-block">
+        <div class="subject-header">
+          <h2>{{ subject.subject }}</h2>
+          <span class="exam-date">{{ subject.exam_date if subject.exam_date else "Exam date not found" }}</span>
+        </div>
+        <div class="topics">
+          {% for topic in subject.topics %}
+            <div class="topic-row">
+              <span class="topic-name">{{ topic }}</span>
+              <select class="status-select">
+                <option value="">Select</option>
+                <option value="done">Done</option>
+                <option value="partial">Partially done</option>
+                <option value="incomplete">Incomplete</option>
+                <option value="others">Others</option>
+              </select>
+              <input class="other-input" placeholder="Enter custom status" />
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
 
-<div class="container">
-
-<!-- LEFT PANEL -->
-
-<div class="card topics-card">
-
-{% for subject in data.subjects %}
-
-<div class="subject-block">
-
-<div class="subject-header">
-
-<h2>{{subject.subject}}</h2>
-
-<span class="exam-date">
-{{subject.exam_date if subject.exam_date else "No exam date"}}
-</span>
-
+  <div class="card hours-card">
+    <div class="hours-header"><span>Date</span><span>Study Hours</span></div>
+    <div id="hoursList"></div>
+  </div>
 </div>
 
-<div class="topics">
-
-{% for topic in subject.topics %}
-
-<div class="topic-row">
-
-<span class="topic-name">{{topic}}</span>
-
-<select class="status-select">
-
-<option value="">Select</option>
-<option value="completed">Completed</option>
-<option value="partial">Partially Completed</option>
-<option value="not_started">Not Started</option>
-<option value="others">Others</option>
-
-</select>
-
-<input class="other-input" placeholder="Enter custom status">
-
-</div>
-
-{% endfor %}
-
-</div>
-
-</div>
-
-{% endfor %}
-
-</div>
-
-
-<!-- RIGHT PANEL -->
-
-<div class="card hours-card">
-
-<div class="hours-header">
-
-<span>Date</span>
-<span>Study Hours</span>
-
-</div>
-
-<div id="hoursList"></div>
-
-</div>
-
-</div>
-
-
-<button id="generateBtn" class="generate-btn">
-
-Generate Schedule
-
-</button>
-
+<button id="generateBtn" class="generate-btn">Generate Schedule</button>
 
 <script src="{{ url_for('static', filename='Status.js') }}"></script>
-
 </body>
 </html>
