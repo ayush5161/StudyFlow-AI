@@ -81,22 +81,30 @@ def process_text(text):
             {
                 "role": "system",
                 "content": """
-Extract exam schedule and syllabus topics.
+You extract structured academic information from documents.
 
-Return JSON ONLY in this format:
+Return JSON ONLY.
+
+Format:
 
 {
- "datesheet":{
-   "01-01-2026":"maths",
-   "02-01-2026":"physics"
- },
-
- "syllabus":{
-   "maths":["topic1","topic2"],
-   "physics":["topic1","topic2"]
- }
+ "subjects":[
+   {
+     "subject":"subject name",
+     "exam_date":"YYYY-MM-DD or null",
+     "topics":[
+       "topic1",
+       "topic2"
+     ]
+   }
+ ]
 }
-"""
+
+Rules:
+- Combine syllabus topics under the correct subject
+- Extract exam dates from datesheet documents
+- If no exam date exists set null
+- Remove duplicates"""
             },
 
             {

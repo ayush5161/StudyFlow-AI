@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Api, Resource, reqparse
-from text_extractor import extract_schedule
+from flask_restful import Api
+from text_extractor import extract
+from schedule_planner import generate_schedule
 import json
 
 app = Flask(__name__)
@@ -13,117 +14,149 @@ db = SQLAlchemy(app)
 api = Api(app)
 
 
-class Schedule(db.Model):
+# -----------------------
+# DATABASE MODEL
+# -----------------------
+
+class StudyData(db.Model):
+
     userid = db.Column(db.Integer, primary_key=True)
-    datesheet = db.Column(db.String(8000), nullable=False)
-    topics = db.Column(db.String(8000), nullable=False)
 
-    def __repr__(self):
-        return f"Schedule(userid={self.userid})"
+    extracted_json = db.Column(db.Text)
 
+    topic_status = db.Column(db.Text)
 
-parser = reqparse.RequestParser()
-parser.add_argument('datesheet', type=str, required=True, help="Datesheet is required")
-parser.add_argument('topics', type=str, required=True, help="Topics are required")
+    schedule_json = db.Column(db.Text)
 
 
-class Item(Resource):
+# -----------------------
+# UPLOAD FILES
+# -----------------------
 
-    def get(self, userid):
-        item = Schedule.query.filter_by(userid=userid).first()
+@app.route("/upload", methods=["POST"])
+def upload_files():
 
-        if item:
-            return {
-                "userid": item.userid,
-                "datesheet": item.datesheet,
-                "topics": item.topics
-            }, 200
+    userid = request.form.get("userid")
 
-        return {"message": "Item not found"}, 404
+    files = request.files.getlist("files")
 
+    all_subjects = []
 
-    def post(self, userid):
+    for file in files:
 
-        if Schedule.query.filter_by(userid=userid).first():
-            return {"message": f"User '{userid}' already exists"}, 400
+        path = "uploads/" + file.filename
 
-        data = parser.parse_args()
+        file.save(path)
 
-        item = Schedule(
+        result = extract(path)
+
+        if "subjects" in result:
+            all_subjects.extend(result["subjects"])
+
+    data = {
+        "subjects": all_subjects
+    }
+
+    existing = StudyData.query.filter_by(userid=userid).first()
+
+    if existing:
+
+        existing.extracted_json = json.dumps(data)
+
+    else:
+
+        new = StudyData(
             userid=userid,
-            datesheet=data["datesheet"],
-            topics=data["topics"]
+            extracted_json=json.dumps(data)
         )
 
-        db.session.add(item)
-        db.session.commit()
+        db.session.add(new)
 
-        return {
-            "userid": item.userid,
-            "datesheet": item.datesheet,
-            "topics": item.topics
-        }, 201
+    db.session.commit()
+
+    return jsonify(data)
 
 
-    def delete(self, userid):
+# -----------------------
+# GET EXTRACTED DATA
+# -----------------------
 
-        item = Schedule.query.filter_by(userid=userid).first()
+@app.route("/subjects/<int:userid>", methods=["GET"])
+def get_subjects(userid):
 
-        if item:
-            db.session.delete(item)
-            db.session.commit()
-            return {"message": "Item deleted"}, 200
+    user = StudyData.query.filter_by(userid=userid).first()
 
-        return {"message": "Item not found"}, 404
+    if not user:
+        return {"error":"User not found"},404
 
-
-    def put(self, userid):
-
-        data = parser.parse_args()
-
-        item = Schedule.query.filter_by(userid=userid).first()
-
-        if item:
-            item.datesheet = data["datesheet"]
-            item.topics = data["topics"]
-
-        else:
-            item = Schedule(
-                userid=userid,
-                datesheet=data["datesheet"],
-                topics=data["topics"]
-            )
-            db.session.add(item)
-
-        db.session.commit()
-
-        return {
-            "userid": item.userid,
-            "datesheet": item.datesheet,
-            "topics": item.topics
-        }, 200
+    return jsonify(json.loads(user.extracted_json))
 
 
-class ItemList(Resource):
+# -----------------------
+# SUBMIT TOPIC STATUS
+# -----------------------
 
-    def get(self):
+@app.route("/submit_status/<int:userid>", methods=["POST"])
+def submit_status(userid):
 
-        items = Schedule.query.all()
+    data = request.json
 
-        return [
-            {
-                "userid": item.userid,
-                "datesheet": item.datesheet,
-                "topics": item.topics
-            }
-            for item in items
-        ], 200
+    user = StudyData.query.filter_by(userid=userid).first()
+
+    if not user:
+        return {"error":"User not found"},404
+
+    user.topic_status = json.dumps(data)
+
+    db.session.commit()
+
+    return {"message":"Status saved"}
 
 
-api.add_resource(ItemList, '/item')
-api.add_resource(Item, '/item/<int:userid>')
+# -----------------------
+# GENERATE SCHEDULE
+# -----------------------
 
-if __name__ == '__main__':
+@app.route("/generate_schedule/<int:userid>", methods=["POST"])
+def generate(userid):
+
+    user = StudyData.query.filter_by(userid=userid).first()
+
+    if not user:
+        return {"error":"User not found"},404
+
+    topic_data = json.loads(user.topic_status)
+
+    schedule = generate_schedule(topic_data)
+
+    user.schedule_json = json.dumps(schedule)
+
+    db.session.commit()
+
+    return jsonify(schedule)
+
+
+# -----------------------
+# GET FINAL SCHEDULE
+# -----------------------
+
+@app.route("/schedule/<int:userid>", methods=["GET"])
+def get_schedule(userid):
+
+    user = StudyData.query.filter_by(userid=userid).first()
+
+    if not user:
+        return {"error":"User not found"},404
+
+    return jsonify(json.loads(user.schedule_json))
+
+
+# -----------------------
+# MAIN
+# -----------------------
+
+if __name__ == "__main__":
+
     with app.app_context():
         db.create_all()
 
