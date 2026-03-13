@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Topics Status</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='Status.css') }}">
+</head>
+
+<body>
+
+<h1 class="page-title">Topics Status</h1>
+
+<div class="dashboard">
+
+<!-- LEFT PANEL -->
+<div class="card topics-card">
+
+{% for subject in data.subjects %}
+
+<div class="subject-block">
+
+<div class="subject-header">
+<h2>{{subject.name}}</h2>
+<span>{{subject.exam_date}}</span>
+</div>
+
+<div class="topics">
+
+{% for topic in subject.topics %}
+
+<div class="topic-row">
+
+<span class="topic-name">{{topic}}</span>
+
+<select class="status-select" onchange="showOther(this)">
+<option value="">Select</option>
+<option value="completed">Completed</option>
+<option value="partially_completed">Partially Completed</option>
+<option value="not_started">Not Started</option>
+<option value="others">Others</option>
+</select>
+
+<input type="text" class="other-input" placeholder="Enter status">
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<!-- RIGHT PANEL -->
+
+<div class="card hours-card">
+
+<div class="hours-header">
+<span>Date</span>
+<span>Enter hours you can study</span>
+</div>
+
+<div class="hours-list">
+
+{% for d in dates %}
+
+<div class="date-row">
+
+<span>{{d}}</span>
+
+<input type="number" min="0" placeholder="Enter">
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='Status.js') }}"></script>
+
+</body>
+</html>
