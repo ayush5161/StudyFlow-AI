@@ -1,8 +1,9 @@
-from flask import Flask
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
-from flask_restful import Api, Resource, reqparse
-from text_extractor import extract_schedule
+from text_extractor import extract, organize_with_llm
+from schedule_planner import generate_schedule
 import json
+import os
 
 app = Flask(__name__)
 
@@ -10,120 +11,191 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userdata.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-api = Api(app)
+
+UPLOAD_FOLDER = "uploads"
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 
-class Schedule(db.Model):
+# -----------------------
+# DATABASE
+# -----------------------
+
+class StudyData(db.Model):
+
     userid = db.Column(db.Integer, primary_key=True)
-    datesheet = db.Column(db.String(8000), nullable=False)
-    topics = db.Column(db.String(8000), nullable=False)
 
-    def __repr__(self):
-        return f"Schedule(userid={self.userid})"
+    extracted_json = db.Column(db.Text)
 
+    topic_status = db.Column(db.Text)
 
-parser = reqparse.RequestParser()
-parser.add_argument('datesheet', type=str, required=True, help="Datesheet is required")
-parser.add_argument('topics', type=str, required=True, help="Topics are required")
+    schedule_json = db.Column(db.Text)
 
 
-class Item(Resource):
+# -----------------------
+# PAGE ROUTES
+# -----------------------
 
-    def get(self, userid):
-        item = Schedule.query.filter_by(userid=userid).first()
-
-        if item:
-            return {
-                "userid": item.userid,
-                "datesheet": item.datesheet,
-                "topics": item.topics
-            }, 200
-
-        return {"message": "Item not found"}, 404
+@app.route("/")
+def upload_page():
+    return render_template("Upload-page.html")
 
 
-    def post(self, userid):
+@app.route("/status")
+def status_page():
 
-        if Schedule.query.filter_by(userid=userid).first():
-            return {"message": f"User '{userid}' already exists"}, 400
+    userid = 1
 
-        data = parser.parse_args()
+    user = StudyData.query.filter_by(userid=userid).first()
 
-        item = Schedule(
-            userid=userid,
-            datesheet=data["datesheet"],
-            topics=data["topics"]
-        )
+    if not user:
+        return "Upload files first"
 
-        db.session.add(item)
-        db.session.commit()
+    data = json.loads(user.extracted_json)
 
-        return {
-            "userid": item.userid,
-            "datesheet": item.datesheet,
-            "topics": item.topics
-        }, 201
+    dates = []
 
+    for s in data["subjects"]:
+        if s.get("exam_date"):
+            dates.append(s["exam_date"])
 
-    def delete(self, userid):
-
-        item = Schedule.query.filter_by(userid=userid).first()
-
-        if item:
-            db.session.delete(item)
-            db.session.commit()
-            return {"message": "Item deleted"}, 200
-
-        return {"message": "Item not found"}, 404
+    return render_template(
+        "Status.html",
+        data=data,
+        dates=dates
+    )
 
 
-    def put(self, userid):
+@app.route("/schedule_page")
+def schedule_page():
+    return render_template("Schedule.html")
 
-        data = parser.parse_args()
 
-        item = Schedule.query.filter_by(userid=userid).first()
+# -----------------------
+# FILE UPLOAD
+# -----------------------
 
-        if item:
-            item.datesheet = data["datesheet"]
-            item.topics = data["topics"]
+@app.route("/upload", methods=["POST"])
+def upload_files():
+
+    try:
+
+        userid = request.form.get("userid")
+
+        if not userid:
+            userid = 1
+
+        userid = int(userid)
+
+        files = request.files.getlist("files")
+
+        if not files:
+            return {"error":"No files uploaded"},400
+
+        all_text = []
+
+        for file in files:
+
+            if file.filename == "":
+                continue
+
+            path = os.path.join(UPLOAD_FOLDER, file.filename)
+
+            file.save(path)
+
+            text = extract(path)
+
+            all_text.append(text)
+
+        if not all_text:
+            return {"error":"Text extraction failed"},400
+
+        final_json = organize_with_llm(all_text)
+
+        existing = StudyData.query.filter_by(userid=userid).first()
+
+        if existing:
+
+            existing.extracted_json = json.dumps(final_json)
 
         else:
-            item = Schedule(
+
+            new = StudyData(
                 userid=userid,
-                datesheet=data["datesheet"],
-                topics=data["topics"]
+                extracted_json=json.dumps(final_json)
             )
-            db.session.add(item)
+
+            db.session.add(new)
 
         db.session.commit()
 
-        return {
-            "userid": item.userid,
-            "datesheet": item.datesheet,
-            "topics": item.topics
-        }, 200
+        return jsonify(final_json)
+
+    except Exception as e:
+
+        print("UPLOAD ERROR:", e)
+
+        return {"error":str(e)},500
+
+# -----------------------
+# SAVE STATUS
+# -----------------------
+
+@app.route("/submit_status/<int:userid>", methods=["POST"])
+def submit_status(userid):
+
+    user = StudyData.query.filter_by(userid=userid).first()
+
+    if not user:
+        return {"error": "User not found"},404
+
+    user.topic_status = json.dumps(request.json)
+
+    db.session.commit()
+
+    return {"message":"saved"}
 
 
-class ItemList(Resource):
+# -----------------------
+# GENERATE SCHEDULE
+# -----------------------
 
-    def get(self):
+@app.route("/generate_schedule/<int:userid>", methods=["POST"])
+def generate(userid):
 
-        items = Schedule.query.all()
+    user = StudyData.query.filter_by(userid=userid).first()
 
-        return [
-            {
-                "userid": item.userid,
-                "datesheet": item.datesheet,
-                "topics": item.topics
-            }
-            for item in items
-        ], 200
+    topic_data = json.loads(user.topic_status)
+
+    schedule = generate_schedule(topic_data)
+
+    user.schedule_json = json.dumps(schedule)
+
+    db.session.commit()
+
+    return jsonify(schedule)
 
 
-api.add_resource(ItemList, '/item')
-api.add_resource(Item, '/item/<int:userid>')
+# -----------------------
+# GET FINAL SCHEDULE
+# -----------------------
 
-if __name__ == '__main__':
+@app.route("/schedule/<int:userid>")
+def schedule(userid):
+
+    user = StudyData.query.filter_by(userid=userid).first()
+
+    if not user:
+        return {"error":"not found"}
+
+    return jsonify(json.loads(user.schedule_json))
+
+
+# -----------------------
+
+if __name__ == "__main__":
+
     with app.app_context():
         db.create_all()
 

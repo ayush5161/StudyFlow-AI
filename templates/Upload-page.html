@@ -6,7 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyFlow AI</title>
 
-<link rel="stylesheet" href="Upload-page.css">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='Upload-page.css') }}">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
@@ -78,7 +79,7 @@ Generate Study Plan
 </div>
 
 </section>
-<script src="{{ url_for('static', filename='js/Upload-page.js') }}"></script>
+<script src="{{ url_for('static', filename='Upload-page.js') }}"></script>
 
 </body>
 

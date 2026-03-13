@@ -13,42 +13,37 @@ MODEL = "qwen/qwen3-vl-235b-a22b-thinking"
 
 def generate_schedule(extracted_data, study_hours):
 
-    prompt = f"""
-You are an AI study planner.
+    prompt = f"""You are an intelligent exam preparation planner.
 
-You receive:
+Input contains:
+1. Subjects
+2. Exam dates
+3. Topics with preparation status
+4. Hours available per day
 
-1) Exam dates and subjects
-2) Syllabus topics
-3) Available study hours per day
+Your task is to generate a realistic day-by-day study schedule.
 
 Rules:
-- Allocate topics before their exam date
-- Split hours into study blocks
-- Prefer 1hr or 2hr sessions
-- Do not exceed the hours available that day
-- Cover all topics
 
-Return JSON only.
+1. Prioritize subjects with the nearest exam date.
+2. Topics marked "not started" should receive the most study time.
+3. Topics marked "partially completed" should receive moderate time.
+4. Topics marked "completed" should only receive revision if extra time exists.
+5. Never schedule a topic after its exam date.
+6. Do not exceed the available hours for that day.
+7. Prefer study blocks of 1 or 2 hours.
+8. Spread topics across multiple days if needed.
 
-Exam data:
-{json.dumps(extracted_data, indent=2)}
+Return JSON only in this format:
 
-Study hours per day:
-{json.dumps(study_hours, indent=2)}
-
-Return JSON like:
-
-{{
- "01-01-2026": {{
-   "2hr":"Topic A",
-   "2hr_2":"Topic B"
- }},
- "02-01-2026": {{
-   "1hr":"Topic C"
- }}
-}}
-"""
+{
+ "schedule":{
+   "YYYY-MM-DD":[
+      {"duration":"2h","topic":"Subject - Topic"},
+      {"duration":"1h","topic":"Subject - Topic"}
+   ]
+ }
+}"""
 
     response = client.chat.completions.create(
 

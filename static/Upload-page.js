@@ -1,98 +1,117 @@
 const syllabusInput = document.getElementById("syllabusInput");
+const datesheetInput = document.getElementById("datesheetInput");
+
 const syllabusName = document.getElementById("syllabusName");
+const datesheetName = document.getElementById("datesheetName");
 
-syllabusInput.addEventListener("change", function(){
+const uploadBtn = document.querySelector(".upload-btn");
 
-if(this.files.length > 1){
-syllabusName.textContent = this.files.length + " files uploaded";
-}
-else if(this.files.length === 1){
-syllabusName.textContent = this.files[0].name;
-}
-else{
-syllabusName.textContent = "No file chosen";
-}
+const dropAreas = document.querySelectorAll(".drop-area");
+
+
+/* -----------------------
+FILE SELECT
+-----------------------*/
+
+syllabusInput.addEventListener("change", () => {
+
+    if (syllabusInput.files.length > 0) {
+        syllabusName.textContent = syllabusInput.files.length + " file(s) selected";
+    }
+
+});
+
+datesheetInput.addEventListener("change", () => {
+
+    if (datesheetInput.files.length > 0) {
+        datesheetName.textContent = datesheetInput.files[0].name;
+    }
 
 });
 
 
-const dateInput = document.getElementById("datesheetInput");
-const dateName = document.getElementById("datesheetName");
+/* -----------------------
+DRAG & DROP
+-----------------------*/
 
-dateInput.addEventListener("change", function(){
+dropAreas[0].addEventListener("dragover", e => {
+    e.preventDefault();
+});
 
-if(this.files.length > 0){
-dateName.textContent = this.files[0].name;
-}
-else{
-dateName.textContent = "No file chosen";
-}
+dropAreas[0].addEventListener("drop", e => {
+
+    e.preventDefault();
+
+    const files = e.dataTransfer.files;
+
+    syllabusInput.files = files;
+
+    syllabusName.textContent = files.length + " file(s) selected";
 
 });
 
-// Drag and Drop functionality
-const dropAreas = document.querySelectorAll('.drop-area');
 
-dropAreas.forEach(area => {
-    const input = area.querySelector('input[type="file"]');
-    const span = area.querySelector('.file-name');
+dropAreas[1].addEventListener("dragover", e => {
+    e.preventDefault();
+});
 
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        area.addEventListener(eventName, preventDefaults, false);
-    });
+dropAreas[1].addEventListener("drop", e => {
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    e.preventDefault();
+
+    const files = e.dataTransfer.files;
+
+    datesheetInput.files = files;
+
+    datesheetName.textContent = files[0].name;
+
+});
+
+
+/* -----------------------
+UPLOAD TO FLASK
+-----------------------*/
+
+uploadBtn.addEventListener("click", async () => {
+
+    if (!syllabusInput.files.length || !datesheetInput.files.length) {
+
+        alert("Please upload both syllabus and datesheet");
+
+        return;
+
     }
 
-    // Highlight drop area when dragging over
-    ['dragenter', 'dragover'].forEach(eventName => {
-        area.addEventListener(eventName, highlight, false);
-    });
+    const formData = new FormData();
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        area.addEventListener(eventName, unhighlight, false);
-    });
+    formData.append("userid", 1);
 
-    function highlight(e) {
-        area.classList.add('drag-over');
+    for (let file of syllabusInput.files) {
+        formData.append("files", file);
     }
 
-    function unhighlight(e) {
-        area.classList.remove('drag-over');
+    formData.append("files", datesheetInput.files[0]);
+
+
+    try {
+
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+
+        console.log("UPLOAD RESPONSE:", data);
+
+        window.location.href = "/status";
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Upload failed");
+
     }
 
-    // Handle drop
-    area.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        handleFiles(files);
-    }
-
-    function handleFiles(files) {
-        // Create a DataTransfer object to set files
-        const dt = new DataTransfer();
-        for (let file of files) {
-            dt.items.add(file);
-        }
-        input.files = dt.files;
-
-        // Update display
-        updateFileName();
-    }
-
-    function updateFileName() {
-        if (input.files.length > 1) {
-            span.textContent = input.files.length + " files uploaded";
-        } else if (input.files.length === 1) {
-            span.textContent = input.files[0].name;
-        } else {
-            span.textContent = "No file chosen";
-        }
-    }
 });
