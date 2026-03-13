@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFlow AI</title>
+
+<link rel="stylesheet" href="Upload-page.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<header class="navbar">
+
+<div class="logo">StudyFlow</div>
+
+<nav>
+<a href="#">Home</a>
+<a href="#">Features</a>
+<a href="#">Docs</a>
+<a href="#">About</a>
+</nav>
+
+<button class="btn-primary">Login</button>
+
+</header>
+
+
+<section class="hero">
+
+<span class="badge">Introducing AI</span>
+
+<h1>Upload Your Syllabus & Datesheet</h1>
+
+<p>
+StudyFlow AI will analyze your syllabus and exam schedule to generate
+a smart day-by-day study plan automatically.
+</p>
+
+
+<div class="upload-box">
+
+<h3>Upload Files</h3>
+
+<div class="drop-area">
+<p>Drag & Drop Syllabus</p>
+
+<label class="file-btn">
+Choose File
+<input type="file" multiple id="syllabusInput">
+</label>
+
+<span class="file-name" id="syllabusName">No file chosen</span>
+
+</div>
+
+
+<div class="drop-area">
+<p>Drag & Drop Datesheet</p>
+
+<label class="file-btn">
+Choose File
+<input type="file" id="datesheetInput">
+</label>
+
+<span class="file-name" id="datesheetName">No file chosen</span>
+
+</div>
+
+<button class="btn-primary upload-btn">
+Generate Study Plan
+</button>
+
+</div>
+
+</section>
+<script src="{{ url_for('static', filename='js/Upload-page.js') }}"></script>
+
+</body>
+
+</html>
