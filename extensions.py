@@ -15,12 +15,15 @@ from sqlalchemy import event
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    try:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-    except Exception:
-        pass
+    # Only run PRAGMA on SQLite connections to avoid transaction abort errors in PostgreSQL
+    conn_module = type(dbapi_connection).__module__
+    if conn_module.startswith('sqlite') or conn_module == '_sqlite3':
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+        except Exception:
+            pass
 
 # Constants that were previously at top-level of app.py
 RATE_LIMIT_DEFAULTS = {
