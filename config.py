@@ -7,7 +7,10 @@ class Config:
         if os.environ.get('FLASK_ENV') == 'production':
             raise RuntimeError("SECRET_KEY environment variable MUST be set in production mode!")
         SECRET_KEY = 'change-me-before-deploy'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///userdata.db')
+    db_url = os.environ.get('DATABASE_URL', 'sqlite:///userdata.db')
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 20 * 1024 * 1024
     CACHE_TYPE = 'SimpleCache'

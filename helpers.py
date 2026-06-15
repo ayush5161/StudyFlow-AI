@@ -253,26 +253,26 @@ def _ensure_runtime_schema():
             if 'user' in tables:
                 existing_user = {col['name'] for col in inspector.get_columns('user')}
                 if 'full_name' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN full_name VARCHAR(50)")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN full_name VARCHAR(50)')
                 if 'upload_count' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN upload_count INTEGER DEFAULT 0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN upload_count INTEGER DEFAULT 0 NOT NULL')
                 if 'generations_count' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN generations_count INTEGER DEFAULT 0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN generations_count INTEGER DEFAULT 0 NOT NULL')
                 if 'last_active' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN last_active DATETIME")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN last_active DATETIME')
                 if 'input_tokens_used' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN input_tokens_used INTEGER DEFAULT 0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN input_tokens_used INTEGER DEFAULT 0 NOT NULL')
                 if 'output_tokens_used' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN output_tokens_used INTEGER DEFAULT 0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN output_tokens_used INTEGER DEFAULT 0 NOT NULL')
                 if 'last_model_used' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN last_model_used VARCHAR(100)")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN last_model_used VARCHAR(100)')
                 if 'total_cost' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN total_cost FLOAT DEFAULT 0.0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN total_cost FLOAT DEFAULT 0.0 NOT NULL')
                 if 'cost_limit' not in existing_user:
-                    conn.exec_driver_sql("ALTER TABLE user ADD COLUMN cost_limit FLOAT DEFAULT 2.0 NOT NULL")
+                    conn.exec_driver_sql('ALTER TABLE "user" ADD COLUMN cost_limit FLOAT DEFAULT 2.0 NOT NULL')
                 else:
                     # Migrate old default limits (10.0 or 1000.0) to the new 2.0 default
-                    conn.exec_driver_sql("UPDATE user SET cost_limit = 2.0 WHERE cost_limit = 10.0 OR cost_limit = 1000.0")
+                    conn.exec_driver_sql('UPDATE "user" SET cost_limit = 2.0 WHERE cost_limit = 10.0 OR cost_limit = 1000.0')
 
             # 4. Check activity_log columns
             if 'activity_log' in tables:

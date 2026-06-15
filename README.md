@@ -93,7 +93,7 @@ StudyFlow AI features a responsive user experience styled with custom glassmorph
 
 ### Backend & API
 * **Application Framework:** Python / Flask
-* **Database Layer:** SQLite with SQLAlchemy ORM
+* **Database Layer:** PostgreSQL (Neon serverless) or SQLite with SQLAlchemy ORM
 * **Task Pipelines:** Multi-threaded OCR and file processing
 
 ### AI & OCR Pipeline
@@ -184,6 +184,9 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory and define the following variables:
 
 ```env
+# Database Configuration
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
 # AI Model & OpenRouter Configs
 AICREDITS_API_KEY=your_openrouter_api_key
 
@@ -206,6 +209,7 @@ SMTP_FROM_NAME=StudyFlow AI
 
 ### Configuration Directory Details
 
+* `DATABASE_URL`: Connection string for the PostgreSQL database (e.g., Neon serverless connection string with `sslmode=require`).
 * `AICREDITS_API_KEY`: Used to query OpenRouter model completion endpoints.
 * `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Handles identity verification and secure single sign-on logic.
 * `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`: Configures transaction callbacks and verifies subscription signatures.
