@@ -312,8 +312,13 @@ def rate_limited(e): return _render_error(429,'Slow Down','Too many requests.')
 @app.errorhandler(Exception)
 def handle_exception(e):
     from flask_limiter.errors import RateLimitExceeded
+    from werkzeug.exceptions import HTTPException
+    
     if isinstance(e, RateLimitExceeded):
         return _render_error(429, 'Slow Down', 'Rate limit hit. Wait a moment.')
+        
+    if isinstance(e, HTTPException):
+        return e
     
     app.logger.error(f"Unhandled Exception: {e}", exc_info=True)
     

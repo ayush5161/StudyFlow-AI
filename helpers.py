@@ -306,9 +306,9 @@ def _ensure_runtime_schema():
                     conn.exec_driver_sql("""
                         INSERT INTO membership_tier (name, display_price, model_id, budget_limit, token_multiplier, speed_label, tutor_quality_label, display_order, active, created_at, updated_at)
                         VALUES 
-                        ('Bronze', 0, 'mistralai/mistral-nemo', 1.0, 1.0, 'Standard', 'Standard', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-                        ('Platinum', 9, 'mistralai/mistral-nemo', 2.0, 2.0, 'Standard', 'Improved', 2, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-                        ('Diamond', 49, 'mistralai/mistral-nemo', 36.0, 36.0, 'Faster', 'Best', 3, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        ('Bronze', 0, 'mistralai/mistral-nemo', 1.0, 1.0, 'Standard', 'Standard', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+                        ('Platinum', 9, 'mistralai/mistral-nemo', 2.0, 2.0, 'Standard', 'Improved', 2, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+                        ('Diamond', 49, 'mistralai/mistral-nemo', 36.0, 36.0, 'Faster', 'Best', 3, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                     """)
 
             # 8. Check user_membership columns
@@ -319,7 +319,7 @@ def _ensure_runtime_schema():
                 if 'custom_budget_limit' not in existing_um:
                     conn.exec_driver_sql("ALTER TABLE user_membership ADD COLUMN custom_budget_limit FLOAT")
                 if 'bronze_exhausted_before' not in existing_um:
-                    conn.exec_driver_sql("ALTER TABLE user_membership ADD COLUMN bronze_exhausted_before BOOLEAN DEFAULT 0 NOT NULL")
+                    conn.exec_driver_sql("ALTER TABLE user_membership ADD COLUMN bronze_exhausted_before BOOLEAN DEFAULT FALSE NOT NULL")
 
             # 9. Auto-assign Bronze tier to any users missing membership records
             if 'user_membership' in tables and 'user' in tables:
