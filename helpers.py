@@ -325,14 +325,14 @@ def _ensure_runtime_schema():
             if 'user_membership' in tables and 'user' in tables:
                 if db.engine.dialect.name == 'sqlite':
                     conn.exec_driver_sql("""
-                        INSERT OR IGNORE INTO user_membership (user_id, tier_id, usage_cost, usage_percentage, upgraded_at)
-                        SELECT id, (SELECT id FROM membership_tier WHERE name='Bronze'), 0.0, 0.0, CURRENT_TIMESTAMP 
+                        INSERT OR IGNORE INTO user_membership (user_id, tier_id, usage_cost, usage_percentage, upgraded_at, total_amount_paid, bronze_exhausted_before)
+                        SELECT id, (SELECT id FROM membership_tier WHERE name='Bronze'), 0.0, 0.0, CURRENT_TIMESTAMP, 0.0, false 
                         FROM user
                     """)
                 else:
                     conn.exec_driver_sql("""
-                        INSERT INTO user_membership (user_id, tier_id, usage_cost, usage_percentage, upgraded_at)
-                        SELECT id, (SELECT id FROM membership_tier WHERE name='Bronze'), 0.0, 0.0, CURRENT_TIMESTAMP 
+                        INSERT INTO user_membership (user_id, tier_id, usage_cost, usage_percentage, upgraded_at, total_amount_paid, bronze_exhausted_before)
+                        SELECT id, (SELECT id FROM membership_tier WHERE name='Bronze'), 0.0, 0.0, CURRENT_TIMESTAMP, 0.0, false 
                         FROM "user"
                         ON CONFLICT (user_id) DO NOTHING
                     """)
