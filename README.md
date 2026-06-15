@@ -1,278 +1,251 @@
-# StudyFlow AI
+# ⚡ StudyFlow AI
 
-StudyFlow AI is an AI-powered study planner that automatically generates a **personalized study schedule** from a student's **syllabus and exam datesheet**.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-studyflowai.app-7C3AED?style=for-the-badge&logo=google-chrome&logoColor=white)](https://studyflowai.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![PaddleOCR](https://img.shields.io/badge/OCR-PaddleOCR-red?style=for-the-badge)](https://github.com/PaddlePaddle/PaddleOCR)
 
-Instead of manually planning study sessions, users simply upload their syllabus and exam schedule. The system extracts topics, matches them with exam dates, and generates a **day-by-day study plan optimized around the user’s available study hours and progress.**
+> **StudyFlow AI** is an intelligent study planner and personal tutoring platform designed to convert complex syllabi and datesheets into highly optimized, day-by-day learning schedules. 
 
----
-
-# Features
-
-### AI Syllabus Understanding
-
-Uploads supported:
-
-* PDF syllabus
-* DOCX syllabus
-* Image or PDF exam datesheets
-
-The system extracts text from these files and uses an LLM to structure the data.
-
-### Automatic Study Plan Generation
-
-StudyFlow AI generates a **date-wise study schedule** based on:
-
-* Exam dates
-* Topics to study
-* User's available study hours
-
-### Progress Tracking
-
-Users can update their progress for each topic:
-
-* Done
-* Partially Done
-* Incomplete
-* Custom progress notes
-
-The schedule can be **re-adjusted based on updated progress.**
-
-### User Accounts
-
-Each user has their own account:
-
-* Secure login
-* Password hashing with salt
-* Personal study schedules stored in the database
-
-### Persistent Data
-
-All study plans and progress are saved so users can **resume planning later.**
+By utilizing advanced OCR pipeline and LLM processing, the application extracts curriculum topics, deadlines, and dates to automatically generate structured roadmaps and provide an interactive AI-powered tutor for every study topic.
 
 ---
 
-# Tech Stack
+## ✨ Key Highlights
 
-### Backend
-
-* Python
-* Flask
-* SQLAlchemy
-* SQLite
-
-### AI Models
-
-Using OpenRouter LLM APIs:
-
-* `qwen/qwen2.5-72b-instruct`
-* `qwen/qwen3-vl-235b-a22b-thinking`
-
-Used for:
-
-* syllabus understanding
-* topic extraction
-* exam date matching
-* schedule planning
-
-### Frontend
-
-* HTML
-* CSS
-* JavaScript
-
-### Document Processing
-
-* PyPDF
-* python-docx
-* Pillow
+* **Automated Schedule Generation** – Custom AI-generated timelines built around your exam schedules and available daily study hours.
+* **Personalized AI Tutor** – Context-aware conversational tutor for every generated topic in your roadmap.
+* **Robust OCR Integration** – Automated text extraction from scanned document PDFs and datesheet images.
+* **Multi-Format Parsing** – Direct support for PDF, Word documents, spread sheets, presentation decks, and standard image files.
+* **Interactive Progress Tracking** – Dynamic learning analytics and real-time schedule re-balancing based on completion status.
+* **Premium Billing Core** – Secure membership tier upgrades integrated with Razorpay.
+* **Granular Admin Control** – Comprehensive analytics dashboard for monitoring user activity, API usage tokens, and hosting cost details.
 
 ---
 
-# Project Structure
+## 🏗️ System Architecture
 
-```
-StudyFlow-AI
-│
-├── app.py                 # Main Flask server
-├── models.py              # Database models
-├── text_extractor.py      # File text extraction + AI structuring
-├── schedule_planner.py    # Study schedule generation
-│
-├── templates
-│   ├── login.html
-│   ├── Upload-page.html
-│   ├── Status.html
-│   └── Schedule.html
-│
-├── static
-│   ├── upload.js
-│   ├── Status.js
-│   ├── schedule.js
-│   ├── Upload-page.css
-│   └── Status.css
-│
-├── uploads                # Uploaded files
-├── instance               # Database storage
-│
-└── README.md
+The following diagram illustrates how user-uploaded files flow through the StudyFlow AI extraction, planning, and interactive execution engines.
+
+```mermaid
+graph TD
+    A[User Uploads Files] --> B[OCR & Document Parsing Engine]
+    B --> C[Subject & Topic Extraction]
+    C --> D[AI Curricular Analysis]
+    D --> E[Schedule Generation Engine]
+    E --> F[Personalized Study Plan]
+    F --> G[Context-Aware AI Tutor]
+    F --> H[Progress Tracking & Analytics]
+    H -->|Dynamic Adjustments| E
 ```
 
 ---
 
-# How It Works
+## 🛠️ Supported File Formats
 
-### 1 Upload Syllabus + Datesheet
+StudyFlow AI processes multiple curriculum documents concurrently. The final file uploaded must be the examination datesheet to anchor the scheduling timeline.
 
-The user uploads:
+| File Type | Extensions | Purpose |
+|:---|:---|:---|
+| **Documents** | `.pdf`, `.docx`, `.txt` | Syllabus files, textbooks, or course guides |
+| **Images** | `.png`, `.jpg`, `.jpeg`, `.webp` | Datesheet pictures, schedules, or handwritten syllabi |
+| **Data & Presentations** | `.xlsx`, `.ppt`, `.pptx` | Tabular schedules or lesson slide decks |
 
-* syllabus document
-* exam schedule
+---
 
-### 2 Text Extraction
+## 🎨 Screenshots
 
-Files are processed and converted to text using:
+StudyFlow AI features a responsive user experience styled with custom glassmorphic styling optimized across desktop, tablet, and mobile platforms.
 
-* PDF parser
-* DOCX parser
-* Image processing
+### Desktop Experience
 
-### 3 AI Structuring
+#### Landing Page
+![Landing Page](screenshots/landing-desktop.png)
 
-The extracted text is sent to the LLM which produces structured JSON:
+#### Study Schedule
+![Schedule](screenshots/schedule-desktop.png)
 
-```
-{
-  "subjects":[
-    {
-      "subject":"Design Thinking with AI",
-      "exam_date":"2026-01-15",
-      "topics":[
-        "Introduction to Design Thinking",
-        "Empathy and Problem Identification",
-        "AI Ethics"
-      ]
-    }
-  ]
-}
-```
+#### AI Tutor
+![AI Tutor](screenshots/ai-tutor-desktop.png)
 
-### 4 User Progress Input
+#### Progress Tracking
+![Progress Tracking](screenshots/progress-desktop.png)
 
-The user marks their preparation status for each topic.
+#### Admin Dashboard
+![Admin Dashboard](screenshots/admin-dashboard.png)
 
-### 5 Schedule Generation
+---
 
-The system generates a daily schedule based on:
+### Mobile Experience
 
-* exam dates
-* study hours per day
-* progress level
+| Upload Page | Mobile Schedule |
+| :---: | :---: |
+| ![Mobile Upload](screenshots/mobile-upload.png) | ![Mobile Schedule](screenshots/mobile-schedule.png) |
 
-### 6 Study Plan Display
+---
 
-The final study plan is displayed date-wise.
+## ⚙️ Tech Stack
 
-Example:
+### Frontend & UI
+* **Core Languages:** HTML5, CSS3 (Custom responsive styling), JavaScript (ES6+)
+* **Interactive Components:** Dynamic status triggers, conversational chat interface
 
-```
-2026-01-02
-    Design Thinking
-        - Empathy and Problem Identification (2h)
+### Backend & API
+* **Application Framework:** Python / Flask
+* **Database Layer:** SQLite with SQLAlchemy ORM
+* **Task Pipelines:** Multi-threaded OCR and file processing
 
-2026-01-03
-    Design Thinking
-        - AI Ethics (2h)
+### AI & OCR Pipeline
+* **LLM Engine:** OpenRouter AI API (`qwen/qwen2.5-72b-instruct`, `qwen/qwen3-vl-235b-a22b-thinking`)
+* **Text Extraction:** PaddleOCR, `pdf2image`, PyPDF, `python-docx`
+
+### Infrastructure & Integrations
+* **Payments:** Razorpay Subscription Integration
+* **Authentication:** Google OAuth 2.0 / Email OTP
+* **Email System:** Resend SMTP Services
+* **Deployment & Domain:** Render / Name.com
+
+---
+
+## 📂 Project Structure
+
+```bash
+studyflow-ai/
+├── backend/
+│   ├── admin_bp.py             # Admin panel control flow & analytics API
+│   ├── api_bp.py               # Core application endpoints (Schedules, topics, progress)
+│   ├── auth_bp.py              # User authentication (Google OAuth, OTP validations)
+│   ├── chat_bp.py              # AI Tutor conversational chat router
+│   ├── pages_bp.py             # Main frontend page routes
+│   └── razor.py                # Razorpay transactions and billing client
+├── database/
+│   ├── models.py               # Database schemas (Users, Schedules, Progress, Logs)
+│   └── instance/
+│       └── studyflow.db        # Local SQLite database
+├── ocr/
+│   ├── text_extractor.py       # Core PaddleOCR, DOCX, and PDF text parsers
+│   └── extractors/             # File-specific parsing strategies
+├── ai/
+│   ├── schedule_planner.py     # AI logic for date mapping and topic allocation
+│   ├── teacher.py              # Context-aware tutoring agent engine
+│   └── llm/                    # OpenRouter API configurations and prompt strategies
+├── payments/
+│   └── templates/              # Checkout modals and payment status pages
+├── authentication/
+│   └── helpers.py              # Password hashing, salting, and JWT tokens helper utilities
+├── static/                     # Global static assets
+│   ├── css/                    # Modular layout styles (glassmorphism UI variables)
+│   └── js/                     # Event handlers for schedules, upload pipelines, and chat
+├── templates/                  # Frontend markup views
+│   ├── Upload-page.html        # Drag-and-drop syllabus portal
+│   ├── Status.html             # Progress monitor and metrics page
+│   └── Schedule.html           # Interactive Study Roadmap dashboard
+├── app.py                      # Flask core gateway entrypoint
+├── config.py                   # System environment configurations
+├── extensions.py               # Database, Mail, and Session global initialization instances
+├── requirements.txt            # Python dependencies manifest
+└── README.md                   # Repository documentation
 ```
 
 ---
 
-# Installation
+## 🚀 Installation & Local Setup
 
-Clone the repository:
+Follow these steps to set up and run a local instance of StudyFlow AI.
 
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd studyflow-ai
 ```
-git clone https://github.com/YOUR_USERNAME/StudyFlow-AI.git
-cd StudyFlow-AI
-```
 
-Create virtual environment:
-
-```
+### 2. Create and Activate Virtual Environment
+```bash
+# Create environment
 python -m venv venv
+
+# Activate on Windows
 venv\Scripts\activate
+
+# Activate on macOS/Linux
+source venv/bin/activate
 ```
 
-Install dependencies:
-
-```
-pip install flask flask_sqlalchemy python-docx pypdf openai pillow
-```
-
----
-
-# Environment Setup
-
-Create a file:
-
-```
-apikey.py
-```
-
-Inside it add:
-
-```
-key = "YOUR_OPENROUTER_API_KEY"
+### 3. Install Required Dependencies
+```bash
+pip install -r requirements.txt
 ```
 
 ---
 
-# Run the Server
+## 🔒 Environment Configuration
 
+Create a `.env` file in the root directory and define the following variables:
+
+```env
+# AI Model & OpenRouter Configs
+AICREDITS_API_KEY=your_openrouter_api_key
+
+# Google Authentication Keys
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Payments Integration
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+
+# Email Dispatch Services
+RESEND_API_KEY=your_resend_api_key
+
+# Server Settings
+SECRET_KEY=your_flask_session_secret_key
+SMTP_FROM_EMAIL=no-reply@studyflowai.app
+SMTP_FROM_NAME=StudyFlow AI
 ```
+
+### Configuration Directory Details
+
+* `AICREDITS_API_KEY`: Used to query OpenRouter model completion endpoints.
+* `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Handles identity verification and secure single sign-on logic.
+* `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`: Configures transaction callbacks and verifies subscription signatures.
+* `RESEND_API_KEY`: Leveraged for high-reliability dispatch of security OTP emails.
+* `SECRET_KEY`: Signs session cookies and keeps application state tamper-proof.
+* `SMTP_FROM_EMAIL` / `SMTP_FROM_NAME`: Defines metadata parameters for emails sent to users.
+
+---
+
+## 🏃 Running Locally
+
+Once configured, boot the local development server:
+
+```bash
 python app.py
 ```
 
-Server will start at:
-
+By default, the server listens for traffic at:
+```text
+http://localhost:5000
 ```
-http://127.0.0.1:5000
-```
 
 ---
 
-# Future Improvements
+## 👥 Contributors
 
-* Smart schedule optimization
-* Deadline prioritization
-* Pomodoro-based scheduling
-* Mobile UI support
-* Google Calendar integration
-* Offline scheduling mode
+StudyFlow AI is designed, developed, and maintained by:
 
----
-
-# Demo Use Case
-
-Example workflow:
-
-1. Upload syllabus PDF
-2. Upload exam datesheet image
-3. AI extracts topics and exam dates
-4. User selects preparation level
-5. AI generates a full study schedule
+| Contributor | Role | Core Focus Areas |
+| :--- | :--- | :--- |
+| **Manish Rai**<br>[@realmanishrai](https://github.com/realmanishrai) | **Backend Engineer** | Backend Framework, AI Tutor Engines, OCR Pipeline, DB Schemas, Authentication Systems, Checkout, Infrastructure & Deployment |
+| **Ayush Sharma**<br>[@sharma-ayush-dev](https://github.com/sharma-ayush-dev) | **Frontend Designer** | UI/UX Prototyping, Glassmorphic CSS Styling, Responsive Design, User-Flow & Interface Development |
 
 ---
 
-# License
+## 🤝 Acknowledgements
 
-MIT License
-
----
-
-# Author
-
-Built for AI Hackathon by:
-
-**Ayush** and **Manish**
-
-Passionate about AI, software engineering, and building intelligent systems.
+* **OpenRouter** – Providing low-latency interfaces for state-of-the-art LLMs.
+* **PaddleOCR** – Enabling lightning-fast character recognition across images.
+* **Flask** – Powering our modular backend routing structure.
+* **Razorpay** – Seamlessly handling global credit/debit subscriptions.
+* **Resend** – Reliable transaction and security email logistics.
+* **Render** – Seamless cloud deployment hosting environment.
